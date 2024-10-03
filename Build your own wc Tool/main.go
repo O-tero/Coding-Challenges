@@ -17,16 +17,19 @@ func main() {
 	countLines := flag.Bool("l", false, "count lines")
 	flag.Parse()
 
+	var data []byte
+	var err error
 	if len(flag.Args()) == 0 {
-		fmt.Println("Please provide a filename.")
-		os.Exit(1)
-	}
-
-	filename := flag.Arg(0)
-
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		log.Fatalf("Failed to read file: %v", err)
+		data, err = ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			log.Fatalf("Failed to read from standard input: %v", err)
+		}
+	} else {
+		filename := flag.Arg(0)
+		data, err = ioutil.ReadFile(filename)
+		if err != nil {
+			log.Fatalf("Failed to read file: %v", err)
+		}
 	}
 
 	content := string(data)
@@ -40,22 +43,22 @@ func main() {
 	charCount := utf8.RuneCountInString(content)
 
 	if *countBytes {
-		fmt.Printf("%8d %s\n", byteCount, filename)
+		fmt.Printf("%8d\n", byteCount)
 	}
 
 	if *countWords {
-		fmt.Printf("%8d %s\n", wordCount, filename)
+		fmt.Printf("%8d\n", wordCount)
 	}
 
 	if *countChars {
-		fmt.Printf("%8d %s\n", charCount, filename)
+		fmt.Printf("%8d\n", charCount)
 	}
 
 	if *countLines {
-		fmt.Printf("%8d %s\n", lineCount, filename)
+		fmt.Printf("%8d\n", lineCount)
 	}
 
 	if !*countBytes && !*countWords && !*countChars && !*countLines {
-		fmt.Printf("%8d %8d %8d %s\n", lineCount, wordCount, byteCount, filename)
+		fmt.Printf("%8d %8d %8d\n", lineCount, wordCount, byteCount)
 	}
 }
