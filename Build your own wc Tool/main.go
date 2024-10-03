@@ -14,6 +14,7 @@ func main() {
 	countBytes := flag.Bool("c", false, "count bytes")
 	countWords := flag.Bool("w", false, "count words")
 	countChars := flag.Bool("m", false, "count characters")
+	countLines := flag.Bool("l", false, "count lines")
 	flag.Parse()
 
 	if len(flag.Args()) == 0 {
@@ -23,7 +24,6 @@ func main() {
 
 	filename := flag.Arg(0)
 
-	// Read the file contents
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatalf("Failed to read file: %v", err)
@@ -31,24 +31,31 @@ func main() {
 
 	content := string(data)
 
-	// Check if the -c flag is set (count bytes)
+	lineCount := len(strings.Split(content, "\n"))
+
+	wordCount := len(strings.Fields(content))
+
+	byteCount := len(data)
+
+	charCount := utf8.RuneCountInString(content)
+
 	if *countBytes {
-		fmt.Printf("%8d %s\n", len(data), filename)
+		fmt.Printf("%8d %s\n", byteCount, filename)
 	}
 
-	// Check if the -w flag is set (count words)
 	if *countWords {
-		words := strings.Fields(content)
-		fmt.Printf("%8d %s\n", len(words), filename)
+		fmt.Printf("%8d %s\n", wordCount, filename)
 	}
 
-	// Check if the -m flag is set (count characters)
 	if *countChars {
-		charCount := utf8.RuneCountInString(content)
 		fmt.Printf("%8d %s\n", charCount, filename)
 	}
 
-	if !*countBytes && !*countWords && !*countChars {
-		fmt.Println("Usage: ccwc [-c|-w|-m] <filename>")
+	if *countLines {
+		fmt.Printf("%8d %s\n", lineCount, filename)
+	}
+
+	if !*countBytes && !*countWords && !*countChars && !*countLines {
+		fmt.Printf("%8d %8d %8d %s\n", lineCount, wordCount, byteCount, filename)
 	}
 }
