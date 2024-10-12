@@ -67,6 +67,6 @@ func (p *Parser) parseValue() error {
 	case 0:
 		return fmt.Errorf("Unexpected end of input")
 	default:
-		return fmt.Errorf("Unexpected token: %v", p.current)
+		return fmt.Errorf("unexpected token: %v", p.current)
 	}
 }

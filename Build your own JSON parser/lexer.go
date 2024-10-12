@@ -45,7 +45,7 @@ func NewLexer(input string) *Lexer {
 // readChar reads the next character from the input
 func (l *Lexer) readChar() {
 	if l.readPosition >= len(l.input) {
-		l.currentChar = 0 // 0 represents EOF
+		l.currentChar = 0 
 	} else {
 		l.currentChar = rune(l.input[l.readPosition])
 	}
@@ -83,7 +83,7 @@ func (l *Lexer) NextToken() Token {
 			token.Value = l.readNumber()
 			return token
 		} else {
-			// Handle true, false, and null
+	
 			switch l.currentChar {
 			case 't':
 				token.Type = True
