@@ -42,4 +42,3 @@ cat test.json | go run main.go
 - **Step 2:** String Keys and Values
 - **Step 3:** Different Data Types
 - **Step 4:** Nested Objects and Arrays
-
