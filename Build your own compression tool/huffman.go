@@ -35,8 +35,7 @@ func (pq *PriorityQueue) Pop() interface{} {
 }
 
 // BuildHuffmanTree constructs the Huffman tree based on character frequencies
-func BuildHuffmanTree(freqMap map[rune]int) *Node {
-	// Create a priority queue and add all characters as nodes
+func BuildHuffmanTree(freqMap map[rune]int) *Node { // Capitalized
 	pq := make(PriorityQueue, 0)
 	heap.Init(&pq)
 
@@ -44,7 +43,6 @@ func BuildHuffmanTree(freqMap map[rune]int) *Node {
 		heap.Push(&pq, &Node{Char: char, Frequency: freq})
 	}
 
-	// Build the Huffman tree
 	for pq.Len() > 1 {
 		left := heap.Pop(&pq).(*Node)
 		right := heap.Pop(&pq).(*Node)
@@ -61,8 +59,8 @@ func BuildHuffmanTree(freqMap map[rune]int) *Node {
 	return heap.Pop(&pq).(*Node)
 }
 
-// PrintHuffmanTree prints the Huffman tree structure for debugging
-func PrintHuffmanTree(node *Node, prefix string) {
+// PrintHuffmanTree prints the Huffman tree structure
+func PrintHuffmanTree(node *Node, prefix string) { 
 	if node == nil {
 		return
 	}

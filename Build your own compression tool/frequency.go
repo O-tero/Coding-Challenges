@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-// calculateCharFrequency reads a file and returns a map of character frequencies
-func calculateCharFrequency(filename string) (map[rune]int, error) {
+// CalculateCharFrequency reads a file and returns a map of character frequencies
+func CalculateCharFrequency(filename string) (map[rune]int, error) { 
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -16,7 +16,7 @@ func calculateCharFrequency(filename string) (map[rune]int, error) {
 	frequencyMap := make(map[rune]int)
 
 	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanRunes) // Scan runes (characters) instead of words or lines
+	scanner.Split(bufio.ScanRunes) // Scan runes (characters)
 
 	for scanner.Scan() {
 		char := []rune(scanner.Text())[0]

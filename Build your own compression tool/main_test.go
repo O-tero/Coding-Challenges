@@ -25,7 +25,7 @@ func TestCalculateCharFrequency(t *testing.T) {
 	file.Close()
 
 	// Calculate character frequencies
-	freq, err := calculateCharFrequency(file.Name())
+	freq, err := CalculateCharFrequency(file.Name())
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

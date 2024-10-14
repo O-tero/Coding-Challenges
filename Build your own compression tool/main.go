@@ -15,16 +15,16 @@ func main() {
 	filename := os.Args[1]
 
 	// Step 1: Calculate character frequency
-	frequencyMap, err := calculateCharFrequency(filename)
+	frequencyMap, err := CalculateCharFrequency(filename) 
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
 
 	// Step 2: Build the Huffman Tree from character frequency
-	huffmanTree := BuildHuffmanTree(frequencyMap)
+	huffmanTree := BuildHuffmanTree(frequencyMap) 
 
 	// Optionally, print the Huffman Tree for debugging
 	fmt.Println("Huffman Tree:")
-	PrintHuffmanTree(huffmanTree, "")
+	PrintHuffmanTree(huffmanTree, "") 
 }
