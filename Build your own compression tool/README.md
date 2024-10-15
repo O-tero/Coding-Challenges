@@ -35,11 +35,11 @@ This is a command-line tool for compressing and decompressing files using Huffma
 
 Example Commands
 To compress a file:
-    ```bash
+```bash
     ./huffman -compress -input input.txt -output compressed.huff
 
 To decompress a file:
-    ```bash
+```bash
     ./huffman -decompress -input compressed.huff -output output.txt
 
 ### How It Works - Compressing a File:
