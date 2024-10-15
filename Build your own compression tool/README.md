@@ -26,6 +26,7 @@ This is a command-line tool for compressing and decompressing files using Huffma
 
     ```bash
     go build -o huffman
+    ```
 
 ### Command Line Arguments
 
@@ -39,10 +40,12 @@ This is a command-line tool for compressing and decompressing files using Huffma
 
     ```bash
     ./huffman -compress -input input.txt -output compressed.huff
+    ```
 
 #### To decompress a file:
     ```bash
     ./huffman -decompress -input compressed.huff -output output.txt
+    ```
 
 ### How It Works - Compressing a File:
 
@@ -55,4 +58,3 @@ Decompressing a File:
 
 - Read the compressed file to retrieve the Huffman tree and the packed bytes.
 - Decode the packed bytes using the Huffman tree and write the decompressed data to the specified output file.
-````
