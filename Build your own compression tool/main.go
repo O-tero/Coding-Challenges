@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// Node represents a node in the Huffman tree
 type Node struct {
 	Char      rune
 	Frequency int
@@ -16,6 +17,7 @@ type Node struct {
 	Right     *Node
 }
 
+// PriorityQueue implements a priority queue for Nodes
 type PriorityQueue []*Node
 
 func (pq PriorityQueue) Len() int { return len(pq) }
@@ -47,7 +49,7 @@ func CalculateCharFrequency(filename string) (map[rune]int, error) {
 	frequencyMap := make(map[rune]int)
 
 	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanRunes) 
+	scanner.Split(bufio.ScanRunes) // Scan runes (characters)
 
 	for scanner.Scan() {
 		char := []rune(scanner.Text())[0]
@@ -109,6 +111,42 @@ func WriteHeader(frequencyMap map[rune]int, outputFile *os.File) error {
 	return nil
 }
 
+// PackBitsIntoBytes converts a bit string into bytes and writes them to the output file
+func PackBitsIntoBytes(bitString string, outputFile *os.File) error {
+	writer := bufio.NewWriter(outputFile)
+	var currentByte byte
+	var bitCount int
+
+	for _, bit := range bitString {
+		if bit == '1' {
+			currentByte = (currentByte << 1) | 1
+		} else {
+			currentByte = currentByte << 1
+		}
+		bitCount++
+
+		if bitCount == 8 {
+			err := writer.WriteByte(currentByte)
+			if err != nil {
+				return err
+			}
+			currentByte = 0
+			bitCount = 0
+		}
+	}
+
+	// If there are remaining bits, pad with zeros and write the final byte
+	if bitCount > 0 {
+		currentByte = currentByte << (8 - bitCount)
+		err := writer.WriteByte(currentByte)
+		if err != nil {
+			return err
+		}
+	}
+
+	return writer.Flush()
+}
+
 // CompressFile compresses the file using the prefix-code table and writes the compressed data to the output file
 func CompressFile(inputFile string, prefixCodeTable map[rune]string, outputFile *os.File) error {
 	inFile, err := os.Open(inputFile)
@@ -117,29 +155,25 @@ func CompressFile(inputFile string, prefixCodeTable map[rune]string, outputFile 
 	}
 	defer inFile.Close()
 
-	writer := bufio.NewWriter(outputFile)
-
 	scanner := bufio.NewScanner(inFile)
 	scanner.Split(bufio.ScanRunes)
 
-	var compressedData strings.Builder
+	var compressedBits strings.Builder
 
 	for scanner.Scan() {
 		char := []rune(scanner.Text())[0]
-		compressedData.WriteString(prefixCodeTable[char])
+		compressedBits.WriteString(prefixCodeTable[char])
 	}
 
 	if err := scanner.Err(); err != nil {
 		return err
 	}
 
-	// Write compressed data to the output file
-	_, err = writer.WriteString(compressedData.String())
+	err = PackBitsIntoBytes(compressedBits.String(), outputFile)
 	if err != nil {
 		return err
 	}
 
-	writer.Flush()
 	return nil
 }
 
