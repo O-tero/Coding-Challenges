@@ -1,74 +1,51 @@
-// package main
+package main
 
-// import (
-// 	"container/heap"
-// 	"fmt"
-// )
+import (
+    "io/ioutil"
+    "os"
+)
 
-// // Node represents a node in the Huffman tree
-// type Node struct {
-// 	Char      rune
-// 	Frequency int
-// 	Left      *Node
-// 	Right     *Node
-// }
+func CompressFile(inputPath string, outputPath string) error {
+    inputFile, err := os.Open(inputPath)
+    if err != nil {
+        return err
+    }
+    defer inputFile.Close()
 
-// // PriorityQueue implements a priority queue for Nodes
-// type PriorityQueue []*Node
+    content, err := ioutil.ReadAll(inputFile)
+    if err != nil {
+        return err
+    }
 
-// func (pq PriorityQueue) Len() int { return len(pq) }
-// func (pq PriorityQueue) Less(i, j int) bool {
-// 	return pq[i].Frequency < pq[j].Frequency
-// }
-// func (pq PriorityQueue) Swap(i, j int) {
-// 	pq[i], pq[j] = pq[j], pq[i]
-// }
-// func (pq *PriorityQueue) Push(x interface{}) {
-// 	*pq = append(*pq, x.(*Node))
-// }
-// func (pq *PriorityQueue) Pop() interface{} {
-// 	old := *pq
-// 	n := len(old)
-// 	x := old[n-1]
-// 	*pq = old[0 : n-1]
-// 	return x
-// }
+    frequencies := BuildFrequencyMap(string(content))
+    huffmanTree := BuildHuffmanTree(frequencies)
+    prefixTable := BuildPrefixTable(huffmanTree)
 
-// // BuildHuffmanTree constructs the Huffman tree based on character frequencies
-// func BuildHuffmanTree(freqMap map[rune]int) *Node { // Capitalized
-// 	pq := make(PriorityQueue, 0)
-// 	heap.Init(&pq)
+    packedBytes, err := PackBytes(string(content), prefixTable)
+    if err != nil {
+        return err
+    }
 
-// 	for char, freq := range freqMap {
-// 		heap.Push(&pq, &Node{Char: char, Frequency: freq})
-// 	}
+    return WriteCompressedFile(outputPath, huffmanTree, packedBytes)
+}
 
-// 	for pq.Len() > 1 {
-// 		left := heap.Pop(&pq).(*Node)
-// 		right := heap.Pop(&pq).(*Node)
+func DecompressFile(inputPath string, outputPath string) error {
+    inputFile, err := os.Open(inputPath)
+    if err != nil {
+        return err
+    }
+    defer inputFile.Close()
 
-// 		merged := &Node{
-// 			Char:      0,
-// 			Frequency: left.Frequency + right.Frequency,
-// 			Left:      left,
-// 			Right:     right,
-// 		}
-// 		heap.Push(&pq, merged)
-// 	}
+    huffmanTree, packedBytes, err := ReadCompressedFile(inputFile)
+    if err != nil {
+        return err
+    }
 
-// 	return heap.Pop(&pq).(*Node)
-// }
+    outputFile, err := os.Create(outputPath)
+    if err != nil {
+        return err
+    }
+    defer outputFile.Close()
 
-// // PrintHuffmanTree prints the Huffman tree structure
-// func PrintHuffmanTree(node *Node, prefix string) { 
-// 	if node == nil {
-// 		return
-// 	}
-// 	if node.Char != 0 {
-// 		fmt.Printf("%q: %d\n", node.Char, node.Frequency)
-// 	} else {
-// 		fmt.Printf("Node: %d\n", node.Frequency)
-// 	}
-// 	PrintHuffmanTree(node.Left, prefix+"0")
-// 	PrintHuffmanTree(node.Right, prefix+"1")
-// }
+    return UnpackBytesAndDecode(packedBytes, outputFile, huffmanTree)
+}
