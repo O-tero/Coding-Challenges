@@ -3,11 +3,12 @@ package main
 import (
 	"bufio"
 	"container/heap"
+	"encoding/gob"
 	"fmt"
 	"os"
+	"strings"
 )
 
-// Node represents a node in the Huffman tree
 type Node struct {
 	Char      rune
 	Frequency int
@@ -15,7 +16,6 @@ type Node struct {
 	Right     *Node
 }
 
-// PriorityQueue implements a priority queue for Nodes
 type PriorityQueue []*Node
 
 func (pq PriorityQueue) Len() int { return len(pq) }
@@ -48,6 +48,7 @@ func CalculateCharFrequency(filename string) (map[rune]int, error) {
 
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanRunes) 
+
 	for scanner.Scan() {
 		char := []rune(scanner.Text())[0]
 		frequencyMap[char]++
@@ -85,20 +86,6 @@ func BuildHuffmanTree(freqMap map[rune]int) *Node {
 	return heap.Pop(&pq).(*Node)
 }
 
-// PrintHuffmanTree prints the Huffman tree structure
-func PrintHuffmanTree(node *Node, prefix string) {
-	if node == nil {
-		return
-	}
-	if node.Char != 0 {
-		fmt.Printf("%q: %d (%s)\n", node.Char, node.Frequency, prefix)
-	} else {
-		fmt.Printf("Node: %d\n", node.Frequency)
-	}
-	PrintHuffmanTree(node.Left, prefix+"0")
-	PrintHuffmanTree(node.Right, prefix+"1")
-}
-
 // GeneratePrefixCodeTable recursively generates the prefix-code table by traversing the tree
 func GeneratePrefixCodeTable(node *Node, prefix string, table map[rune]string) {
 	if node == nil {
@@ -112,15 +99,60 @@ func GeneratePrefixCodeTable(node *Node, prefix string, table map[rune]string) {
 	}
 }
 
+// WriteHeader writes the character frequency table as a header to the output file
+func WriteHeader(frequencyMap map[rune]int, outputFile *os.File) error {
+	encoder := gob.NewEncoder(outputFile)
+	err := encoder.Encode(frequencyMap)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// CompressFile compresses the file using the prefix-code table and writes the compressed data to the output file
+func CompressFile(inputFile string, prefixCodeTable map[rune]string, outputFile *os.File) error {
+	inFile, err := os.Open(inputFile)
+	if err != nil {
+		return err
+	}
+	defer inFile.Close()
+
+	writer := bufio.NewWriter(outputFile)
+
+	scanner := bufio.NewScanner(inFile)
+	scanner.Split(bufio.ScanRunes)
+
+	var compressedData strings.Builder
+
+	for scanner.Scan() {
+		char := []rune(scanner.Text())[0]
+		compressedData.WriteString(prefixCodeTable[char])
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	// Write compressed data to the output file
+	_, err = writer.WriteString(compressedData.String())
+	if err != nil {
+		return err
+	}
+
+	writer.Flush()
+	return nil
+}
+
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Please provide a filename as input.")
+	if len(os.Args) < 3 {
+		fmt.Println("Please provide input and output filenames.")
 		return
 	}
 
-	filename := os.Args[1]
+	inputFilename := os.Args[1]
+	outputFilename := os.Args[2]
 
-	frequencyMap, err := CalculateCharFrequency(filename)
+	frequencyMap, err := CalculateCharFrequency(inputFilename)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -128,14 +160,27 @@ func main() {
 
 	huffmanTree := BuildHuffmanTree(frequencyMap)
 
-	fmt.Println("Huffman Tree:")
-	PrintHuffmanTree(huffmanTree, "")
-
 	prefixCodeTable := make(map[rune]string)
 	GeneratePrefixCodeTable(huffmanTree, "", prefixCodeTable)
 
-	fmt.Println("\nPrefix-Code Table:")
-	for char, code := range prefixCodeTable {
-		fmt.Printf("%q: %s\n", char, code)
+	outputFile, err := os.Create(outputFilename)
+	if err != nil {
+		fmt.Printf("Error creating output file: %v\n", err)
+		return
 	}
+	defer outputFile.Close()
+
+	err = WriteHeader(frequencyMap, outputFile)
+	if err != nil {
+		fmt.Printf("Error writing header: %v\n", err)
+		return
+	}
+
+	err = CompressFile(inputFilename, prefixCodeTable, outputFile)
+	if err != nil {
+		fmt.Printf("Error compressing file: %v\n", err)
+		return
+	}
+
+	fmt.Println("File compressed successfully.")
 }
