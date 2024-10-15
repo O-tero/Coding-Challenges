@@ -20,22 +20,24 @@ This is a command-line tool for compressing and decompressing files using Huffma
    ```bash
    git clone https://github.com/O-tero/huffman-compression-tool.git
    cd huffman-compression-tool
-
+   ```
 
 ### Build the application
+
     ```bash
     go build -o huffman
 
-
 ### Command Line Arguments
+
 - compress: Flag to indicate that you want to compress a file.
 - decompress: Flag to indicate that you want to decompress a file.
 - input: The path to the input file that you want to process.
--o utput: The path where the output file will be saved.
+  -o utput: The path where the output file will be saved.
 
 Example Commands
 To compress a file:
-```bash
+
+````bash
     ./huffman -compress -input input.txt -output compressed.huff
 
 To decompress a file:
@@ -53,3 +55,4 @@ Decompressing a File:
 
 - Read the compressed file to retrieve the Huffman tree and the packed bytes.
 - Decode the packed bytes using the Huffman tree and write the decompressed data to the specified output file.
+````
