@@ -2,19 +2,28 @@ package main
 
 import (
     "fmt"
+    "log"
     "net/http"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-    fmt.Printf("Received request from %s\n", r.RemoteAddr)
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte("Hello From Backend Server"))
+//initializes a separate server on the given port with a unique message.
+func startBackendServer(port string, message string) {
+    mux := http.NewServeMux()
+    mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        fmt.Fprintf(w, "<html><body>%s</body></html>", message)
+        log.Printf("Handled request on port %s\n", port)
+    })
+
+    server := &http.Server{
+        Addr:    ":" + port,
+        Handler: mux,
+    }
+
+    log.Printf("Starting backend server on port %s...\n", port)
+    log.Fatal(server.ListenAndServe())
 }
 
 func main() {
-    http.HandleFunc("/", handler)
-    fmt.Println("Backend server listening on port 8081...")
-    if err := http.ListenAndServe(":8081", nil); err != nil {
-        panic(err)
-    }
+    go startBackendServer("8080", "Hello from NBA server 8080")
+    startBackendServer("8081", "Hello from basketball server 8081") 
 }

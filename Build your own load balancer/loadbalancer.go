@@ -1,15 +1,27 @@
 package main
 
 import (
-	"bufio"
-	"io"
-	"log"
-	"net"
-	"net/http"
-	"os"
+    "bufio"
+    "io"
+    "log"
+    "net"
+    "net/http"
+    "sync"
 )
 
-const backendAddr = "localhost:8081" 
+var (
+    servers     = []string{"localhost:8080", "localhost:8081"}
+    serverIndex = 0
+    mu          sync.Mutex
+)
+
+func getNextServer() string {
+    mu.Lock()
+    defer mu.Unlock()
+    server := servers[serverIndex]
+    serverIndex = (serverIndex + 1) % len(servers)
+    return server
+}
 
 func handleConnection(conn net.Conn) {
     defer conn.Close()
@@ -23,13 +35,21 @@ func handleConnection(conn net.Conn) {
 
     log.Printf("Received request from %s\n", req.RemoteAddr)
 
-    resp, err := http.DefaultTransport.RoundTrip(req)
+    // Forward the request to the backend server
+    backendServer := getNextServer()
+    client := &http.Client{}
+    req.URL.Host = backendServer
+    req.URL.Scheme = "http"
+    req.RequestURI = ""
+
+    resp, err := client.Do(req)
     if err != nil {
         log.Println("Error forwarding request:", err)
         return
     }
     defer resp.Body.Close()
 
+    // Send the response back to the client
     conn.Write([]byte(resp.Proto + " " + resp.Status + "\r\n"))
     for key, value := range resp.Header {
         for _, v := range value {
@@ -43,8 +63,7 @@ func handleConnection(conn net.Conn) {
 func main() {
     listener, err := net.Listen("tcp", ":80")
     if err != nil {
-        log.Fatal("Error starting server:", err)
-        os.Exit(1)
+        log.Fatal("Error starting load balancer:", err)
     }
     defer listener.Close()
 
@@ -55,6 +74,6 @@ func main() {
             log.Println("Error accepting connection:", err)
             continue
         }
-        go handleConnection(conn) 
+        go handleConnection(conn)
     }
 }
