@@ -80,7 +80,7 @@ func (lb *LoadBalancer) getNextAvailableServer() (*url.URL, int) {
 	log.Println("No available servers.")
 	return nil, -1
 }
-
+ 
 func (lb *LoadBalancer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
