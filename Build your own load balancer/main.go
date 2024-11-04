@@ -6,7 +6,7 @@ import (
     "net/http"
     "time"
 
-    "load-balancer/server" 
+    "load-balancer/server"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 
     flag.Parse()
 
-    lb := loadbalancer.NewLoadBalancer(servers, *healthCheckURL, time.Duration(*healthInterval)*time.Second)
+    lb := server.NewLoadBalancer(servers, *healthCheckURL, time.Duration(*healthInterval)*time.Second)
 
     log.Printf("Starting load balancer on port %s...\n", *port)
     log.Fatal(http.ListenAndServe(":"+*port, lb))
