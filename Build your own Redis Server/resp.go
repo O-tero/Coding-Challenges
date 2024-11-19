@@ -44,7 +44,7 @@ func Deserialize(data []byte) (interface{}, error) {
         var arr []interface{}
         remaining := parts[1:]
         for i := 0; i < length; i++ {
-            value, err := Deserialize(remaining)
+            value, err := Deserialize(bytes.Join(remaining, []byte("\r\n")))
             if err != nil {
                 return nil, err
             }

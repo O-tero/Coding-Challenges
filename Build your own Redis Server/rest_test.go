@@ -1,7 +1,6 @@
 package resp
 
 import (
-    "bytes"
     "testing"
 )
 
