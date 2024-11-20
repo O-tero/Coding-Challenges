@@ -8,48 +8,46 @@ import (
     "strings"
 )
 
-// Deserialize parses a RESP message into Go types
 func Deserialize(data []byte) (interface{}, error) {
     if len(data) == 0 {
         return nil, errors.New("empty input")
     }
 
     switch data[0] {
-    case '+': // Simple Strings
-        return strings.TrimSuffix(string(data[1:]), "\r\n"), nil
-    case '-': // Errors
-        return strings.TrimSuffix(string(data[1:]), "\r\n"), nil
-    case ':': // Integers
-        val, err := strconv.Atoi(strings.TrimSuffix(string(data[1:]), "\r\n"))
-        if err != nil {
-            return nil, errors.New("invalid integer format")
-        }
-        return val, nil
-    case '$': // Bulk Strings
+    case '+': // Simple String
+        return string(data[1 : len(data)-2]), nil
+    case '-': // Error Message
+        return string(data[1 : len(data)-2]), nil
+    case ':': // Integer
+        return strconv.Atoi(string(data[1 : len(data)-2]))
+    case '$': // Bulk String
         parts := bytes.SplitN(data[1:], []byte("\r\n"), 2)
-        if string(parts[0]) == "-1" {
-            return nil, nil // Null Bulk String
-        }
         length, err := strconv.Atoi(string(parts[0]))
-        if err != nil || length < 0 {
-            return nil, errors.New("invalid bulk string length")
+        if err != nil {
+            return nil, err
+        }
+        if length == -1 {
+            return nil, nil
         }
         return string(parts[1][:length]), nil
-    case '*': // Arrays
-        parts := bytes.Split(data[1:], []byte("\r\n"))
+    case '*': // Array
+        parts := bytes.SplitN(data[1:], []byte("\r\n"), 2)
         length, err := strconv.Atoi(string(parts[0]))
         if err != nil || length < 0 {
             return nil, errors.New("invalid array length")
         }
         var arr []interface{}
-        remaining := parts[1:]
+        remaining := parts[1]
         for i := 0; i < length; i++ {
-            value, err := Deserialize(bytes.Join(remaining, []byte("\r\n")))
+            element, err := Deserialize(remaining)
             if err != nil {
                 return nil, err
             }
-            arr = append(arr, value)
-            // Adjust remaining based on value length
+            arr = append(arr, element)
+
+            // Skip serialized element
+            serialized, _ := Serialize(element)
+            remaining = remaining[len(serialized):]
         }
         return arr, nil
     default:
@@ -57,30 +55,29 @@ func Deserialize(data []byte) (interface{}, error) {
     }
 }
 
-// Serialize converts Go types into RESP format
+
+
 func Serialize(value interface{}) (string, error) {
     switch v := value.(type) {
-    case nil: // Null Bulk String
+    case nil:
         return "$-1\r\n", nil
     case string:
-        if strings.HasPrefix(v, "+") || strings.HasPrefix(v, "-") {
-            return v + "\r\n", nil
-        }
+        // Treat as Bulk String
         return fmt.Sprintf("$%d\r\n%s\r\n", len(v), v), nil
     case int:
         return fmt.Sprintf(":%d\r\n", v), nil
     case []interface{}:
-        var buf bytes.Buffer
-        buf.WriteString(fmt.Sprintf("*%d\r\n", len(v)))
+        var sb strings.Builder
+        sb.WriteString(fmt.Sprintf("*%d\r\n", len(v)))
         for _, elem := range v {
             serialized, err := Serialize(elem)
             if err != nil {
                 return "", err
             }
-            buf.WriteString(serialized)
+            sb.WriteString(serialized)
         }
-        return buf.String(), nil
+        return sb.String(), nil
     default:
-        return "", errors.New("unsupported type")
+        return "", fmt.Errorf("unsupported type: %T", value)
     }
 }
