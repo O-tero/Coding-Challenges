@@ -4,6 +4,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+    "github.com/O-tero/internal/resp"
 )
 
 func TestSerialize(t *testing.T) {
